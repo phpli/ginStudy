@@ -1,0 +1,164 @@
+package main
+
+import (
+	"GinHello/routers"
+	"fmt"
+	"github.com/gin-gonic/gin"
+	"net/http"
+	"strings"
+)
+
+func main()  {
+
+	//router := gin.Default()
+
+
+	//router := gin.Default()
+	//
+	//router.GET("/user/:user_id",urlParamTest)
+	//router.GET("/user/top",urlParamTestTop)
+	//router.GET("/user/top/:user_id",urlParamTop)
+
+	////gin.SetMode(gin.ReleaseMode)
+	//router.GET("/ping",hello)
+	//
+	////api参数
+	//router.GET("/user/:name/*action",apiParamTest)
+	//
+	////URL参数
+	//router.GET("/user",urlParamTest)
+	//
+	//router.POST("/user/post",formParamTest)
+	//
+	//router.MaxMultipartMemory = 8<<20
+	//
+	//router.POST("/user/upload",uploadFile)
+	//router.POST("/user/uploadManyFile",uploadManyFile)
+	//
+	//
+	//v1 := router.Group("v1")
+	//{
+	//	v1.GET("/login",login)
+	//	v1.GET("/submit",submit)
+	//}
+	//
+	//v2 := router.Group("v2")
+	//{
+	//	v2.POST("/login",login)
+	//	v2.POST("/submit",submit)
+	//}
+	//_ = router.Run(":9090")
+
+
+	//test router 拆分
+	router := routers.SetupRouter()
+	if err := router.Run(":9090"); err != nil {
+		fmt.Println("startup service failed, err:%v\n", err)
+	}
+	router.Use()
+
+}
+
+func hello(context *gin.Context)  {
+	println(">>>> hello function start <<<<")
+	context.JSON(http.StatusOK,gin.H{
+		"code":200,
+		"success":true,
+	})
+}
+
+/**
+http://localhost:9090/user/changdong/phper
+ */
+func apiParamTest(context *gin.Context)  {
+	name := context.Param("name")
+	action := strings.Trim(context.Param("action"),"/")
+	context.String(http.StatusOK,name+" is "+action)
+}
+
+/**
+http://localhost:9090/user
+*/
+func urlParamTest(context *gin.Context)  {
+	name := context.Param("user_id")
+	context.String(http.StatusOK,fmt.Sprintf("hello %s",name))
+}
+
+
+/**
+http://localhost:9090/user
+*/
+func urlParamTestTop(context *gin.Context)  {
+	context.String(http.StatusOK,fmt.Sprintf("hello bb"))
+}
+
+
+/**
+http://localhost:9090/user
+*/
+func urlParamTop(context *gin.Context)  {
+	name := context.DefaultQuery("user_id","3")
+	context.String(http.StatusOK,fmt.Sprintf("hello bb %s",name))
+}
+
+//表单参数
+func formParamTest(context *gin.Context)  {
+	types := context.DefaultPostForm("type","post")
+	username := context.PostForm("username")
+	password := context.PostForm("password")
+	context.String(http.StatusOK,fmt.Sprintf("username:%s,password:%s,types:%s",username,password,types))
+}
+
+
+//upload
+func uploadFile(context *gin.Context)  {
+	file,err := context.FormFile("file")
+	if err != nil{
+		context.String(http.StatusInternalServerError,"上传出错!")
+	}
+	context.SaveUploadedFile(file, file.Filename)
+	context.String(http.StatusOK,file.Filename)
+}
+
+
+//uploadMany
+func uploadManyFile(context *gin.Context)  {
+	form,err := context.MultipartForm()
+	if err != nil{
+		context.String(http.StatusBadRequest,fmt.Sprintf("get err %s",err.Error()))
+	}
+	files := form.File["files"]
+	for _,file := range files{
+
+		// 逐个存贮
+		if err := context.SaveUploadedFile( file, file.Filename ); err != nil{
+			context.String(http.StatusBadRequest, fmt.Sprintf("upload err %s",err.Error()))
+			return
+		}
+	}
+	context.String(200, fmt.Sprintf("upload ok %d files", len(files)))
+}
+
+
+//route group
+
+func login(context *gin.Context)  {
+	name := context.DefaultQuery("name","Jack")
+	context.String(200,fmt.Sprintf("hello %s" , name))
+}
+
+func submit(context *gin.Context)  {
+	name := context.DefaultQuery("name","lily")
+	context.String(200,fmt.Sprintf("hello %s" , name))
+}
+
+
+
+
+
+
+
+
+
+
+
